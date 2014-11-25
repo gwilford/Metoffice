@@ -1,0 +1,49 @@
+#!/opt/local/bin/perl
+
+use strict;
+use warnings;
+use Data::Dumper;
+use Time::Local;
+use Getopt::Std;
+use POSIX qw(strftime);
+use JSON "decode_json";
+
+my $rrdtool = "rrdtool update /home/pi/Metoffice/weather.rrd --template Wind_Speed:Temperature:Dew_Point:Humidity ";
+my $date = strftime("%Y-%m-%dZ", localtime);
+print $date . "\n";
+
+sub usage {
+	die "Usage: $0";
+}
+
+my $memo = " (" . join(' ', @ARGV) . ")";
+our($opt_i, $opt_p, $opt_s, $opt_e, $opt_d, $opt_x, $opt_y);
+getopts('ip:s:e:d:x:y:') || usage();
+
+# suck in the JSON on stdin
+my $json = <STDIN>;
+
+# clean up rogue periods from Moves Export data
+#$json =~ s/\[,\{/\[\{/; # at start
+#$json =~ s/\},\]/\}\]/; # at end
+
+# remove double periods
+#$json =~ s/,,/,/;
+
+# translate the JSON into a multi-level perl structure
+my $hash = decode_json($json);
+
+my $days = $hash->{SiteRep}->{DV}->{Location}->{Period};
+while (my $day = shift @$days) {
+	my $timepoints = $day->{Rep};
+	$day->{value} =~ s/-|Z//g;
+	print $day->{value} . "\n";
+#	next unless ($day->{value} eq $date);
+	#print Dumper($timepoints);
+	while (my $m = shift @$timepoints) {
+		my $cmd = sprintf("%s '%02d:00 %s'@%d:%.1f:%.1f:%.1f", $rrdtool, $m->{'$'}/60, $day->{value}, 
+								     $m->{S}, $m->{T}, $m->{Dp}, $m->{H});
+		print $cmd . "\n";
+	}
+}
+#print Dumper($hash);
