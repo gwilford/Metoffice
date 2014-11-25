@@ -4,19 +4,10 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Time::Local;
-use Getopt::Std;
 use POSIX qw(strftime);
 use JSON "decode_json";
 
 my $cmd = "/usr/bin/rrdtool update /home/pi/Metoffice/weather.rrd --template Wind_Speed:Temperature:Dew_Point:Humidity";
-
-sub usage {
-	die "Usage: $0";
-}
-
-my $memo = " (" . join(' ', @ARGV) . ")";
-our($opt_i, $opt_p, $opt_s, $opt_e, $opt_d, $opt_x, $opt_y);
-getopts('ip:s:e:d:x:y:') || usage();
 
 # suck in the JSON on stdin
 my $json = <STDIN>;
