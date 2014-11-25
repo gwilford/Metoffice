@@ -8,7 +8,7 @@ use Getopt::Std;
 use POSIX qw(strftime);
 use JSON "decode_json";
 
-my $rrdtool = "/usr/bin/rrdtool update /home/pi/Metoffice/weather.rrd --template Wind_Speed:Temperature:Dew_Point:Humidity";
+my $cmd = "/usr/bin/rrdtool update /home/pi/Metoffice/weather.rrd --template Wind_Speed:Temperature:Dew_Point:Humidity";
 
 sub usage {
 	die "Usage: $0";
@@ -29,8 +29,8 @@ while (my $day = shift @$days) {
 	$day->{value} =~ s/-|Z//g;
 	my $timepoints = $day->{Rep};
 	while (my $m = shift @$timepoints) {
-		my $cmd = sprintf("%s '%02d:00 %s'@%d:%.1f:%.1f:%.1f", $rrdtool, $m->{'$'}/60, $day->{value}, 
-								     $m->{S}, $m->{T}, $m->{Dp}, $m->{H});
-		print $cmd . "\n";
+		$cmd .= sprintf(" '%02d:00 %s'@%d:%.1f:%.1f:%.1f", $m->{'$'}/60, $day->{value}, 
+								   $m->{S}, $m->{T}, $m->{Dp}, $m->{H});
 	}
 }
+print $cmd . "\n";
