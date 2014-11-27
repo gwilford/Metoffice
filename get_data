@@ -1,0 +1,10 @@
+#!/bin/bash
+
+dir=/home/pi/Metoffice
+json=weather.json
+
+cd $dir
+source ./authkey
+
+curl -s -L -X GET -H "Accept: application/json" "http://datapoint.metoffice.gov.uk/public/data/val/wxobs/all/json/$locid?res=hourly&key=$key" > $json
+cat $json | ./weather

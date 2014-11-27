@@ -1,0 +1,28 @@
+#!/opt/local/bin/perl
+
+use strict;
+use warnings;
+use Data::Dumper;
+use POSIX qw(strftime);
+use lib "/home/pi/perl5/lib/perl5";
+use JSON "decode_json";
+
+my $cmd = "/usr/bin/rrdtool update /home/pi/Metoffice/weather.rrd --template Wind_Speed:Temperature:Dew_Point:Humidity";
+
+# suck in the JSON on stdin
+my $json = <STDIN>;
+
+# translate the JSON into a multi-level perl structure
+my $hash = decode_json($json);
+
+my $days = $hash->{SiteRep}->{DV}->{Location}->{Period};
+while (my $day = shift @$days) {
+	# massage value into AT-compatible date for rrdtool
+	$day->{value} =~ s/-|Z//g;
+	my $timepoints = $day->{Rep};
+	while (my $m = shift @$timepoints) {
+		$cmd .= sprintf(" '%02d:00 %s'@%d:%.1f:%.1f:%.1f", $m->{'$'}/60, $day->{value}, 
+								   $m->{S}, $m->{T}, $m->{Dp}, $m->{H});
+	}
+}
+exec($cmd);
