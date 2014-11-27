@@ -6,8 +6,11 @@ use Data::Dumper;
 use POSIX qw(strftime);
 use lib "/home/pi/perl5/lib/perl5";
 use JSON "decode_json";
+use Time::Local;
 
 my $cmd = "/usr/bin/rrdtool update /home/pi/Metoffice/weather.rrd --template Wind_Speed:Temperature:Dew_Point:Humidity";
+my $last = `/usr/bin/rrdtool last /home/pi/Metoffice/weather.rrd`;
+chomp($last);
 
 # suck in the JSON on stdin
 my $json = <STDIN>;
@@ -18,11 +21,15 @@ my $hash = decode_json($json);
 my $days = $hash->{SiteRep}->{DV}->{Location}->{Period};
 while (my $day = shift @$days) {
 	# massage value into AT-compatible date for rrdtool
-	$day->{value} =~ s/-|Z//g;
+	$day->{value} =~ /^(\d{4})-(\d{2})-(\d{2})/ || next;
 	my $timepoints = $day->{Rep};
 	while (my $m = shift @$timepoints) {
-		$cmd .= sprintf(" '%02d:00 %s'@%d:%.1f:%.1f:%.1f", $m->{'$'}/60, $day->{value}, 
-								   $m->{S}, $m->{T}, $m->{Dp}, $m->{H});
+		my $stamp = timelocal(0, 0, $m->{'$'}/60, $3, $2, $1);
+		if ($stamp > $last) {
+			$cmd .= sprintf(" %d:%d:%.1f:%.1f:%.1f", $stamp, 
+					   $m->{S}, $m->{T}, $m->{Dp}, $m->{H});
+		}
 	}
 }
+print $cmd . "\n";
 exec($cmd);
