@@ -1,5 +1,5 @@
 #!/bin/bash
-rrdtool create weather.rrd --step 3600 -b 20141123 \
+rrdtool create weather.rrd --step 3600 -b 20141127 \
 DS:Wind_Speed:GAUGE:86400:0:100 \
 DS:Temperature:GAUGE:86400:-30:50 \
 DS:Dew_Point:GAUGE:86400:-30:50 \

@@ -24,7 +24,8 @@ while (my $day = shift @$days) {
 	$day->{value} =~ /^(\d{4})-(\d{2})-(\d{2})/ || next;
 	my $timepoints = $day->{Rep};
 	while (my $m = shift @$timepoints) {
-		my $stamp = timelocal(0, 0, $m->{'$'}/60, $3, $2, $1);
+		my $stamp = timelocal(0, 0, $m->{'$'}/60, $3, $2-1, $1);
+		#print localtime($stamp) . "\n";
 		if ($stamp > $last) {
 			$cmd .= sprintf(" %d:%d:%.1f:%.1f:%.1f", $stamp, 
 					   $m->{S}, $m->{T}, $m->{Dp}, $m->{H});
