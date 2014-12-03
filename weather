@@ -6,11 +6,14 @@ use Data::Dumper;
 use POSIX qw(strftime);
 use lib "/home/pi/perl5/lib/perl5";
 use JSON "decode_json";
+use RRD::Simple;
 use Time::Local;
 
-my $cmd = "/usr/bin/rrdtool update /home/pi/Metoffice/weather.rrd --template Wind_Speed:Temperature:Dew_Point:Humidity";
-my $last = `/usr/bin/rrdtool last /home/pi/Metoffice/weather.rrd`;
-chomp($last);
+#my $cmd = "/usr/bin/rrdtool update /home/pi/Metoffice/weather.rrd --template Wind_Speed:Temperature:Dew_Point:Humidity";
+#my $last = `/usr/bin/rrdtool last /home/pi/Metoffice/weather.rrd`;
+#chomp($last);
+my $rrd = RRD::Simple->new( file => "/home/pi/Metoffice/weather.rrd" );
+my $last = $rrd->last();
 
 # suck in the JSON on stdin
 my $json = <STDIN>;
@@ -27,10 +30,12 @@ while (my $day = shift @$days) {
 		my $stamp = timelocal(0, 0, $m->{'$'}/60, $3, $2-1, $1);
 		#print localtime($stamp) . "\n";
 		if ($stamp > $last) {
-			$cmd .= sprintf(" %d:%d:%.1f:%.1f:%.1f", $stamp, 
-					   $m->{S}, $m->{T}, $m->{Dp}, $m->{H});
+			#$cmd .= sprintf(" %d:%d:%.1f:%.1f:%.1f", $stamp, 
+			#		   $m->{S}, $m->{T}, $m->{Dp}, $m->{H});
+			$rrd->update($stamp, Wind_Speed => $m->{S}, Temperature => $m->{T},
+					     Dew_Point => $m->{Dp}, Humidity => $m->{H});
 		}
 	}
 }
-print $cmd . "\n";
-exec($cmd);
+#print $cmd . "\n";
+#exec($cmd);
