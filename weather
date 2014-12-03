@@ -9,9 +9,6 @@ use JSON "decode_json";
 use RRD::Simple;
 use Time::Local;
 
-#my $cmd = "/usr/bin/rrdtool update /home/pi/Metoffice/weather.rrd --template Wind_Speed:Temperature:Dew_Point:Humidity";
-#my $last = `/usr/bin/rrdtool last /home/pi/Metoffice/weather.rrd`;
-#chomp($last);
 my $rrd = RRD::Simple->new( file => "/home/pi/Metoffice/weather.rrd" );
 my $last = $rrd->last();
 
@@ -25,17 +22,13 @@ my $days = $hash->{SiteRep}->{DV}->{Location}->{Period};
 while (my $day = shift @$days) {
 	# massage value into AT-compatible date for rrdtool
 	$day->{value} =~ /^(\d{4})-(\d{2})-(\d{2})/ || next;
-	my $timepoints = $day->{Rep};
+	my $timepoints = ref($day->{Rep}) eq 'ARRAY' ? $day->{Rep} : [ $day->{Rep} ];
 	while (my $m = shift @$timepoints) {
 		my $stamp = timelocal(0, 0, $m->{'$'}/60, $3, $2-1, $1);
 		#print localtime($stamp) . "\n";
 		if ($stamp > $last) {
-			#$cmd .= sprintf(" %d:%d:%.1f:%.1f:%.1f", $stamp, 
-			#		   $m->{S}, $m->{T}, $m->{Dp}, $m->{H});
 			$rrd->update($stamp, Wind_Speed => $m->{S}, Temperature => $m->{T},
 					     Dew_Point => $m->{Dp}, Humidity => $m->{H});
 		}
 	}
 }
-#print $cmd . "\n";
-#exec($cmd);
