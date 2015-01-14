@@ -18,7 +18,9 @@ my $json = <STDIN>;
 # translate the JSON into a multi-level perl structure
 my $hash = decode_json($json);
 
-my $days = $hash->{SiteRep}->{DV}->{Location}->{Period};
+my $period = $hash->{SiteRep}->{DV}->{Location}->{Period};
+my $days = ref($period) eq 'ARRAY' ? $period : [ $period ];
+
 while (my $day = shift @$days) {
 	# massage value into AT-compatible date for rrdtool
 	$day->{value} =~ /^(\d{4})-(\d{2})-(\d{2})/ || next;
